@@ -2,6 +2,8 @@ import decimal
 import queue
 from abc import abstractmethod
 
+from devsancabo.graphics import Graphics
+
 
 class GameState:
     def __init__(self, events: queue.Queue, state_queue: queue.LifoQueue):
@@ -16,13 +18,13 @@ class GameState:
             event = self.event_queue.get_nowait()
             self.handle_event(event)
 
-    def render(self, percentage: float):
+    def render(self, percentage: float, graphics: Graphics):
         # as_decimal = decimal.Decimal(percentage * 100)
         # print("Render: Adelantar movimiento de entidades by " + round(as_decimal, 2).__str__() + "%")
-        self.render_internal(percentage)
+        self.render_internal(percentage, graphics)
 
     @abstractmethod
-    def render_internal(self,  percentage: float):
+    def render_internal(self, percentage: float, graphics):
         pass
 
     @abstractmethod
@@ -47,7 +49,7 @@ class NullGameState(GameState):
     def __init__(self, events: queue.Queue, state_queue: queue.LifoQueue):
         GameState.__init__(self, events, state_queue)
 
-    def render_internal(self,  percentage: float):
+    def render_internal(self, percentage: float, graphics):
         # will never be called
         raise GameClosedException()
 

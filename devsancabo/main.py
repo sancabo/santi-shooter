@@ -1,9 +1,11 @@
 import queue
 import time
 import math
+import pygame
 from queue import Queue
 
-from devsancabo.first_level import FirstLevel
+from devsancabo.gamestates.first_level import FirstLevel
+from devsancabo.graphics import Graphics
 from devsancabo.input import InputListener
 from devsancabo.internals import GameState, NullGameState, GameClosedException
 
@@ -19,7 +21,7 @@ class Game:
         self.previous: int = Game.now()
         self.lag: int = 0
         self.event_queue = Queue()
-        self.isRunning = True
+        self.is_running = True
 
         # I read that a state machine that saves the current state to a stack is called a
         # push down automata? It adds the possibility of remembering previous states.
@@ -32,11 +34,15 @@ class Game:
         return math.floor(time.time() * 1000)
 
     def run(self):
-        InputListener(self.event_queue).start_keyboard_listener()
+        graphics = Graphics()
+
+        input_listener = InputListener(self.event_queue)
+        input_listener.start_mouse_listener()
+        input_listener.start_keyboard_listener()
         self.game_state_stack.put(NullGameState(self.event_queue, self.game_state_stack))
         self.game_state_stack.put(FirstLevel(self.event_queue, self.game_state_stack))
 
-        while self.isRunning:
+        while self.is_running:
             self.lag = self.calculate_lag()
             self.lag_render = self.lag
 
@@ -47,11 +53,15 @@ class Game:
                     self.lag -= Game.__MS_PER_UPDATE
 
                 if current_game_state is not None and self.lag_render >= Game.__MIN_MS_PER_RENDER:
-                    current_game_state.render(self.lag / Game.__MS_PER_UPDATE)
+                    graphics.screen.fill("black")
+                    current_game_state.render(self.lag / Game.__MS_PER_UPDATE, graphics)
+                    graphics.show()
 
             except GameClosedException:
-                self.isRunning = False
+                self.is_running = False
                 continue
+
+        pygame.quit()
 
     def calculate_lag(self) -> int:
         current = Game.now()
