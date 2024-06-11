@@ -22,10 +22,6 @@ class Game:
         self.lag: int = 0
         self.event_queue = Queue()
         self.is_running = True
-
-        # I read that a state machine that saves the current state to a stack is called a
-        # push down automata? It adds the possibility of remembering previous states.
-        # so we can use it to navigate "screens" and "menus"
         self.game_state_stack = queue.LifoQueue(maxsize=99)
 
     @staticmethod
@@ -35,7 +31,6 @@ class Game:
 
     def run(self):
         graphics = Graphics()
-
         input_listener = InputListener(self.event_queue)
         input_listener.start_mouse_listener()
         input_listener.start_keyboard_listener()
@@ -52,16 +47,13 @@ class Game:
                     current_game_state.update_logic()
                     self.lag -= Game.__MS_PER_UPDATE
 
-                if current_game_state is not None and self.lag_render >= Game.__MIN_MS_PER_RENDER:
-                    graphics.screen.fill("black")
+                if self.lag_render >= Game.__MIN_MS_PER_RENDER:
                     current_game_state.render(self.lag / Game.__MS_PER_UPDATE, graphics)
-                    graphics.show()
+                    graphics.print_screen()
 
             except GameClosedException:
                 self.is_running = False
                 continue
-
-        pygame.quit()
 
     def calculate_lag(self) -> int:
         current = Game.now()
@@ -70,6 +62,7 @@ class Game:
         return elapsed + self.lag
 
     def __del__(self):
+        pygame.quit()
         print("Exiting game. Goodbye \n")
 
 
