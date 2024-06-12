@@ -1,95 +1,126 @@
+import math
+
 import pygame
 
-from devsancabo.graphics import Graphics
+from devsancabo.entities.base import Drawable, Collisionable
+from devsancabo.graphics import Sprite
+
+INFINITY_THRESHOLD = 999999
+
+ONE_SEC = 1000
 
 
-# Implements Drawable, for the scene tree
-# The scene tree only knows Drawable objects
-# Can we abstract the physics. Activate/Deactivate velocity/acceleration. By inheritance or composition?
-class Player:
-    def __init__(self):
+class Player(Drawable, Collisionable):
+
+    def __init__(self, slippery_factor: int = INFINITY_THRESHOLD, top_speed: float = INFINITY_THRESHOLD):
         # Translate in-game coordinates to screen coordinates
         # Leads to implementation of camera.
         # Separate physics calculations into a physics module
-        self.__player_pos = [0, 0]
-        self.__top_speed = 0.03
+        self.__sprite_sheet = pygame.image.load("assets/car_sprites.png").convert_alpha()
+        self.__orientation = 180
+        super().__init__(Sprite(self.__sprite_sheet))
+        self.__player_box = pygame.Rect(100, 100, 40, 40)
+        self.__top_speed = top_speed
         self.__current_speed_x = 0
         self.__current_speed_y = 0
         self.__acceleration_x = 0
         self.__acceleration_y = 0
-        self.__natural_friction = 0.00003
+        self.__natural_friction = slippery_factor  # 999999 infinite
 
-        # Moveable.apply_accel(accel, residual_lag)
-        #   accel how much coord/millisecond I want to modify the speed each ms
-        #   residual_lag value to add to #update_lag
-        # Moveable.set_top_speed(top_speed)
-        # Moveable.set_slippery_scale(slippery_scale)
-        # Moveable(update_lag, slippery_scale = 1, top_speed = 1)
-        #   update_lag used to scale speed and acceleration for calculation
-        #   maximum coord/millisecond this entity can move
-        #   slippery_scale how much of it's speed it loses each at stop, and each update
+    def get_box(self) -> (int, int, int, int):
+        thetuple =  (self.__player_box.left,
+                self.__player_box.top,
+                self.__player_box.width,
+                self.__player_box.height)
+        # print("Get player box! ", thetuple)
+        return thetuple
 
-    def calculate_movement_deltas(self, percentage):
-        # change logic, when acceleration is 0, apply friction
-        # otherwise, ignore it
-        new_speed_y = self.__current_speed_y + self.__acceleration_y
-        if new_speed_y > 0:
-            new_speed_y = new_speed_y - self.__natural_friction
+    def move_box(self, x, y):
+        self.__player_box = self.__player_box.move(x, y)
+
+    def __calculate_movement_deltas(self, lag, percentage):
+        self.__calculate_velocity_y(lag)
+
+        self.__calculate_velocity_x(lag)
+
+        return (self.__current_speed_x * float(lag / ONE_SEC + (lag * percentage) / ONE_SEC),
+                self.__current_speed_y * float(lag / ONE_SEC + (lag * percentage) / ONE_SEC))
+
+    def __calculate_velocity_y(self, lag):
+        if self.__acceleration_y == 0:
+            # if slippery is not infinite, gradually decrease speed
+            if self.__natural_friction < INFINITY_THRESHOLD:
+                self.__apply_slippery_instance_y(lag)
+            else:
+                self.__current_speed_y = 0
         else:
-            new_speed_y = new_speed_y + self.__natural_friction
-
-        new_speed_x = self.__current_speed_x + self.__acceleration_x
-        if new_speed_x > 0:
-            new_speed_x = new_speed_x - self.__natural_friction
-        else:
-            new_speed_x = new_speed_x + self.__natural_friction
-
-        if self.__top_speed > new_speed_y.__abs__():
-            self.__current_speed_y = new_speed_y
-        else:
-            if new_speed_y > 0:
+            self.__current_speed_y = self.__current_speed_y + float(self.__acceleration_y * lag / ONE_SEC)
+        if self.__current_speed_y.__abs__() > self.__top_speed:
+            if self.__current_speed_y > 0:
                 self.__current_speed_y = self.__top_speed
             else:
-                self.__current_speed_y = - self.__top_speed
+                self.__current_speed_y = -self.__top_speed
 
-        if self.__top_speed > new_speed_x.__abs__():
-            self.__current_speed_x = new_speed_x
+    def __calculate_velocity_x(self, lag):
+        if self.__acceleration_x == 0:
+            # if slippery is not infinite, gradually decrease speed
+            if self.__natural_friction < INFINITY_THRESHOLD:
+                self.__apply_slippery_instance_x(lag)
+            else:
+                self.__current_speed_x = 0
         else:
-            if new_speed_x > 0:
+            self.__current_speed_x = self.__current_speed_x + float(self.__acceleration_x * lag / ONE_SEC)
+        if self.__current_speed_x.__abs__() > self.__top_speed:
+            if self.__current_speed_x > 0:
                 self.__current_speed_x = self.__top_speed
             else:
-                self.__current_speed_x = - self.__top_speed
+                self.__current_speed_x = -self.__top_speed
 
-        return (self.__current_speed_x * float(17 + (17 * percentage)),
-                self.__current_speed_y * float(17 + (17 * percentage)))
+    def __apply_slippery_instance_x(self, lag):
+        if self.__current_speed_x < 0:
+            self.__current_speed_x = self.__current_speed_x + float(self.__natural_friction * lag / ONE_SEC)
+            if self.__current_speed_x > 0:
+                self.__current_speed_x = 0
+        else:
+            self.__current_speed_x = self.__current_speed_x - float(self.__natural_friction * lag / ONE_SEC)
+            if self.__current_speed_x < 0:
+                self.__current_speed_x = 0
 
-    def render(self, percentage, graphics: Graphics):
-        deltas = self.calculate_movement_deltas(percentage)
-        graphics.draw_entity(pygame.Rect(self.__player_pos[0], self.__player_pos[1], 40, 40), deltas)
-        x, y = deltas
-        self.__player_pos = [self.__player_pos[0] + x,
-                             self.__player_pos[1] + y]
+    def __apply_slippery_instance_y(self, lag):
+        if self.__current_speed_y < 0:
+            self.__current_speed_y = self.__current_speed_y + float(self.__natural_friction * lag / ONE_SEC)
+            if self.__current_speed_y > 0:
+                self.__current_speed_y = 0
+        else:
+            self.__current_speed_y = self.__current_speed_y - float(self.__natural_friction * lag / ONE_SEC)
+            if self.__current_speed_y < 0:
+                self.__current_speed_y = 0
 
-    def move_down(self):
-        self.__acceleration_y = 0.0001
+    def update_position(self, lag):
+        deltas = self.__calculate_movement_deltas(lag, 0)
+        self.__player_box = self.__player_box.move(deltas[0], deltas[1])
+        # both speeds form a vector, according to its angle, adjust rotation
+        # need to transform to degrees
+        if self.__current_speed_y != 0 or self.__current_speed_x != 0:
+            self.__orientation = math.atan2(self.__current_speed_y, self.__current_speed_x) * 57.2958
+            if self.__orientation < 0:
+                self.__orientation = 360 + self.__orientation
+            self.__orientation = (self.__orientation + 92) % 360
 
-    def move_up(self):
-        self.__acceleration_y = -0.0001
+    def render(self, percentage, graphics):
+        deltas = self.__calculate_movement_deltas(0, percentage)
+        self.__player_box = self.__player_box.move(deltas[0], deltas[1])
 
-    def move_left(self):
-        self.__acceleration_x = -0.0001
+        # according to rotation, select correct sprite
+        sprite_number = self.__orientation // 15
+        x, y = sprite_number % 5, sprite_number // 5
+        size = 830//5
+        sprite_sheet_box = pygame.Rect(x * size, y * size, size, size)
 
-    def move_right(self):
-        self.__acceleration_x = 0.0001
+        graphics.draw_entity(Sprite(self.__sprite_sheet), self.__player_box, sprite_sheet_box)
 
-    def stop_move_down(self):
-        self.__acceleration_y = 0
-
-    def stop_move_up(self):
-        self.__acceleration_y = 0
-
-    def stop_move_left(self):
-        self.__acceleration_x = 0
-
-    def stop_move_right(self):
-        self.__acceleration_x = 0
+    def accelerate(self, x=None, y=None):
+        if x is not None:
+            self.__acceleration_x = x
+        if y is not None:
+            self.__acceleration_y = y

@@ -1,7 +1,7 @@
-import decimal
 import queue
 from abc import abstractmethod
 
+from devsancabo.entities.base import Collisionable
 from devsancabo.graphics import Graphics
 
 
@@ -12,23 +12,30 @@ class GameState:
         self.state_queue = state_queue
         self.terminated = False
 
-    def update_logic(self):
+    def update_logic(self, lag):
         self.state_queue.put(self)
+        self.on_update(lag)
         while not self.event_queue.empty() and not self.terminated:
             event = self.event_queue.get_nowait()
             self.handle_event(event)
 
     def render(self, percentage: float, graphics: Graphics):
-        # as_decimal = decimal.Decimal(percentage * 100)
-        # print("Render: Adelantar movimiento de entidades by " + round(as_decimal, 2).__str__() + "%")
         self.render_internal(percentage, graphics)
 
     @abstractmethod
-    def render_internal(self, percentage: float, graphics):
+    def render_internal(self, percentage: float, graphics: Graphics):
         pass
 
     @abstractmethod
     def handle_event_internal(self, event):
+        pass
+
+    @abstractmethod
+    def on_update(self, lag):
+        pass
+
+    @abstractmethod
+    def get_collision_entities(self) -> [Collisionable]:
         pass
 
     def handle_event(self, event):
@@ -38,7 +45,8 @@ class GameState:
                 self.state_queue.get_nowait()
                 self.terminated = True
                 print("handled event {0}".format(event))
-            case _: self.handle_event_internal(event)
+            case _:
+                self.handle_event_internal(event)
 
     def __del__(self):
         print("handled {0} enter events".format(self.events_handled))
@@ -51,6 +59,9 @@ class NullGameState(GameState):
 
     def render_internal(self, percentage: float, graphics):
         # will never be called
+        raise GameClosedException()
+
+    def on_update(self):
         raise GameClosedException()
 
     def handle_event_internal(self, event):
