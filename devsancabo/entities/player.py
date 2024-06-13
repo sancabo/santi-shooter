@@ -15,11 +15,14 @@ class Player(Drawable, Collisionable):
     def __init__(self, slippery_factor: int = INFINITY_THRESHOLD, top_speed: float = INFINITY_THRESHOLD):
         # Translate in-game coordinates to screen coordinates
         # Leads to implementation of camera.
-        # Separate physics calculations into a physics module
         self.__sprite_sheet = pygame.image.load("assets/car_sprites.png").convert_alpha()
-        self.__orientation = 180
-        super().__init__(Sprite(self.__sprite_sheet))
+
+        # Used for Collisionable
         self.__player_box = pygame.Rect(100, 100, 40, 40)
+
+        self.__orientation = 180
+        super().__init__(Sprite(self.__sprite_sheet), 100, 100, 40, 40)
+
         self.__top_speed = top_speed
         self.__current_speed_x = 0
         self.__current_speed_y = 0
@@ -27,16 +30,19 @@ class Player(Drawable, Collisionable):
         self.__acceleration_y = 0
         self.__natural_friction = slippery_factor  # 999999 infinite
 
-    def get_box(self) -> (int, int, int, int):
-        thetuple =  (self.__player_box.left,
-                self.__player_box.top,
-                self.__player_box.width,
-                self.__player_box.height)
-        # print("Get player box! ", thetuple)
-        return thetuple
+    def get_col_box(self) -> (int, int, int, int):
+        _tuple = (self.__player_box.left,
+                 self.__player_box.top,
+                 self.__player_box.width,
+                 self.__player_box.height)
+        return _tuple
 
-    def move_box(self, x, y):
+    # Maybe a composite?
+    def move_col_box(self, x, y):
         self.__player_box = self.__player_box.move(x, y)
+
+    def relocate_col_box(self, x, y):
+        self.__player_box = pygame.Rect(x, y, self.__player_box.width, self.__player_box.height)
 
     def __calculate_movement_deltas(self, lag, percentage):
         self.__calculate_velocity_y(lag)
@@ -107,17 +113,18 @@ class Player(Drawable, Collisionable):
                 self.__orientation = 360 + self.__orientation
             self.__orientation = (self.__orientation + 92) % 360
 
-    def render(self, percentage, graphics):
+    def render(self, percentage, graphics, caca=None):
         deltas = self.__calculate_movement_deltas(0, percentage)
         self.__player_box = self.__player_box.move(deltas[0], deltas[1])
 
         # according to rotation, select correct sprite
         sprite_number = self.__orientation // 15
         x, y = sprite_number % 5, sprite_number // 5
-        size = 830//5
+        size = 830 // 5
         sprite_sheet_box = pygame.Rect(x * size, y * size, size, size)
 
-        graphics.draw_entity(Sprite(self.__sprite_sheet), self.__player_box, sprite_sheet_box)
+        # delegate to drawable
+        graphics.draw_entity(self.sprite, self.__player_box, sprite_sheet_box)
 
     def accelerate(self, x=None, y=None):
         if x is not None:

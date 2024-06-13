@@ -5,17 +5,19 @@ from devsancabo.entities.base import Drawable, Collisionable
 
 class Bounds(Drawable, Collisionable):
 
-    def get_box(self) -> (int, int, int, int):
-        thetuple = (super().get_position()[0],
-                super().get_position()[1],
-                super().get_dimensions()[0],
-                super().get_dimensions()[1])
-        # print("Get background box! ", thetuple)
-        return thetuple
+    def move_col_box(self, x, y):
+        super().__position = (super().__position[0] + x, super().__position[1] + y)
+
+    def get_col_box(self) -> (int, int, int, int):
+        _tuple = (super().get_position()[0],
+                  super().get_position()[1],
+                  super().get_dimensions()[0],
+                  super().get_dimensions()[1])
+        return _tuple
 
     def __init__(self, x, y, w, h, sprite=None):
         super().__init__(sprite, x, y, w, h)
 
-    def render(self, percentage, graphics):
+    def render(self, percentage, graphics, sprite_sheet_box=None):
         # It's invisible
         pass
