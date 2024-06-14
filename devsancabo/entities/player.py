@@ -11,10 +11,9 @@ ONE_SEC = 1000
 
 
 class Player(Drawable, Collisionable):
+    # todo implement life and damage
 
     def __init__(self, slippery_factor: int = INFINITY_THRESHOLD, top_speed: float = INFINITY_THRESHOLD):
-        # Translate in-game coordinates to screen coordinates
-        # Leads to implementation of camera.
         self.__sprite_sheet = pygame.image.load("assets/car_sprites.png").convert_alpha()
 
         # Used for Collisionable
@@ -37,7 +36,6 @@ class Player(Drawable, Collisionable):
                  self.__player_box.height)
         return _tuple
 
-    # Maybe a composite?
     def move_col_box(self, x, y):
         self.__player_box = self.__player_box.move(x, y)
 

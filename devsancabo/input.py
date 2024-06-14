@@ -1,20 +1,30 @@
+import string
+
 from pynput import keyboard
 from pynput import mouse
 import queue
 
 
+class Event:
+    def __init__(self, name, params=None):
+        if params is None:
+            params = []
+        self.name = name
+        self.params = params
+
+
 class InputListener:
-    bindings = {keyboard.Key.enter: ["shoot", "stop-shooting"],
-                mouse.Button.left: ["shoot", "stop-shooting"],
-                keyboard.Key.esc: ["escape", "after-escape"],
-                keyboard.Key.down: ["move-down", "stop-move-down"],
-                keyboard.KeyCode.from_char("s"): ["move-down", "stop-move-down"],
-                keyboard.Key.up: ["move-up", "stop-move-up"],
-                keyboard.KeyCode.from_char("w"): ["move-up", "stop-move-up"],
-                keyboard.Key.left: ["move-left", "stop-move-left"],
-                keyboard.KeyCode.from_char("a"): ["move-left", "stop-move-left"],
-                keyboard.Key.right: ["move-right", "stop-move-right"],
-                keyboard.KeyCode.from_char("d"): ["move-right", "stop-move-right"],
+    bindings = {keyboard.Key.enter:                 [Event("shoot"), Event("stop-shooting")],
+                mouse.Button.left:                  [Event("shoot"), Event("stop-shooting")],
+                keyboard.Key.esc:                   [Event("escape"), Event("after-escape")],
+                keyboard.Key.down:                  [Event("move-down"), Event("stop-move-down")],
+                keyboard.KeyCode.from_char("s"):    [Event("move-down"), Event("stop-move-down")],
+                keyboard.Key.up:                    [Event("move-up"), Event("stop-move-up")],
+                keyboard.KeyCode.from_char("w"):    [Event("move-up"), Event("stop-move-up")],
+                keyboard.Key.left:                  [Event("move-left"), Event("stop-move-left")],
+                keyboard.KeyCode.from_char("a"):    [Event("move-left"), Event("stop-move-left")],
+                keyboard.Key.right:                 [Event("move-right"), Event("stop-move-right")],
+                keyboard.KeyCode.from_char("d"):    [Event("move-right"), Event("stop-move-right")],
                 }
 
     def __init__(self, event_queue: queue.Queue):

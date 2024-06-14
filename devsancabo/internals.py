@@ -3,6 +3,7 @@ from abc import abstractmethod
 
 from devsancabo.entities.base import Collisionable
 from devsancabo.graphics import Graphics
+from devsancabo.input import Event
 
 
 class GameState:
@@ -18,18 +19,21 @@ class GameState:
         self.__state_queue.put(self)
         self.on_update(lag)
         while not self.__event_queue.empty() and not self.__terminated:
-            event = self.__event_queue.get_nowait()
+            event: Event = self.__event_queue.get_nowait()
             self.handle_event(event)
 
     def render(self, percentage: float, graphics: Graphics):
         self.render_internal(percentage, graphics)
+
+    def finish(self):
+        self.__state_queue.get_nowait()
 
     @abstractmethod
     def render_internal(self, percentage: float, graphics: Graphics):
         pass
 
     @abstractmethod
-    def handle_event_internal(self, event):
+    def handle_event_internal(self, event: Event):
         pass
 
     @abstractmethod
@@ -40,7 +44,7 @@ class GameState:
     def get_collision_entities(self) -> [Collisionable]:
         pass
 
-    def handle_event(self, event):
+    def handle_event(self, event: Event):
         match event:
             case "hardEscape":
                 self.events_handled = self.events_handled + 1

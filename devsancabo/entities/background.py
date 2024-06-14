@@ -7,14 +7,22 @@ from devsancabo.graphics import Sprite, Graphics
 class Background(Drawable):
 
     def __init__(self):
-        sprite = pygame.image.load("assets/background.jpg").convert_alpha()
-        # 1195 * 800
+        sprite_image = pygame.image.load("assets/background.jpg").convert_alpha()
+
         big_background = pygame.surface.Surface((5000.00, 5000.00))
-        big_background.blit(sprite, (0, 0))
-        big_background.blit(sprite, (800, 0))
-        big_background.blit(sprite, (0, 1195))
-        big_background.blit(sprite, (800, 1195))
+
+        big_background.blit(sprite_image, (0, 0))
+        big_background.blit(sprite_image, (0, 800))
+        big_background.blit(sprite_image, (1195, 0))
+        big_background.blit(sprite_image, (1195, 800))
+        big_background.blit(sprite_image, (0, 1600))
+        big_background.blit(sprite_image, (1195, 1600))
+        big_background.blit(sprite_image, (2390, 0))
+        big_background.blit(sprite_image, (2390, 800))
+        big_background.blit(sprite_image, (2390, 1600))
+
         super().__init__(Sprite(big_background))
+
         font = pygame.font.Font('freesansbold.ttf', 42)
         text_surface = font.render("Move around with WASD", True, Graphics.WHITE)
         text_surface_2 = font.render("Exit with ESC", True, Graphics.WHITE)

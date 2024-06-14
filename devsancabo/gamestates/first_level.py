@@ -1,4 +1,8 @@
+import asyncio
+import math
 import queue
+import time
+from threading import Thread
 
 import pygame.display
 
@@ -6,33 +10,30 @@ from devsancabo.entities.background import Background
 from devsancabo.entities.base import Drawable, Collisionable
 from devsancabo.entities.bounds import Bounds
 from devsancabo.entities.player import Player
-from devsancabo.gamestates.first_level_events import enemies
+from devsancabo.gamestates.timed_events import enemies_top, enemies_left, init_timed_events
+from devsancabo.input import Event
 from devsancabo.internals import GameState
 
 
 class FirstLevel(GameState):
 
-    def __init__(self, events: queue.Queue, state_queue: queue.LifoQueue):
-        super().__init__(events, state_queue)
-        self.__direction = 0
+    def __init__(self, event_queue: queue.Queue, state_queue: queue.LifoQueue):
+        super().__init__(event_queue, state_queue)
         self.sceneTree: [Drawable] = []
         self.player = Player(2000, 600)
+        self.player.relocate_col_box(1440 // 2 - 100, 1020 // 2 - 100)
         self.__enemies = []
         self.background = Background()
         self.bounds = Bounds(0, 0, pygame.display.get_window_size()[0] - 160,
                              pygame.display.get_window_size()[1] - 160)
-        # Each entity should have possibility of collision enabled or disabled
-        # For example, "Background" has collision disabled
         self.sceneTree.append(self.background)
         self.sceneTree.append(self.player)
         self.sceneTree.append(self.bounds)
-        # camera object. it has a position and a rectangle attached(the viewport)
-        # at the time of render. calculate objects within camera viewport
-        # draw those objects, at positions relative to the camera(insted of world-cordinates)
-        # add a thread that performs collision detection on a GameState.
-        # on each collision, generate a CollisionEvent
-        self.__enemies_spawned = 0
+        # todo implement camera
+        self.__enemies_spawned_top = 0
+        self.__enemies_spawned_left = 0
         self.__collision_list = [self.player, self.bounds]
+        init_timed_events(event_queue)
 
     def get_collision_entities(self) -> [Collisionable]:
         return self.__collision_list
@@ -41,16 +42,25 @@ class FirstLevel(GameState):
         self.player.update_position(lag)
         for enemy in self.__enemies:
             enemy.update_position(lag)
-        if self.__enemies_spawned < 5 and self.elapsed_millis//1000 > enemies[self.__enemies_spawned]:
-            self.__spawn_enemy()
-            self.__enemies_spawned = self.__enemies_spawned + 1
+        self.__generate_new_enemies()
+        self.__resolve_collisions()
+
+    def __generate_new_enemies(self):
+        # todo : move this to "spawner" method
+        if (self.__enemies_spawned_top < len(enemies_top) and
+                self.elapsed_millis // 1000 > enemies_top[self.__enemies_spawned_top]):
+            self.__spawn_enemy(True)
+            self.__enemies_spawned_top = self.__enemies_spawned_top + 1
+
+        if (self.__enemies_spawned_left < len(enemies_left) and
+                self.elapsed_millis / 1000 > enemies_left[self.__enemies_spawned_left]):
+            self.__spawn_enemy(False)
+            self.__enemies_spawned_left = self.__enemies_spawned_left + 1
+
+    def __resolve_collisions(self):
+        # todo: implement collisions with enemies
         if not self.player.is_inside(self.bounds):
             self.relocate_out_of_bounds_player()
-        #for i, ci in enumerate(self.__collision_list, 0):
-            #for j, cj in enumerate(self.__collision_list, 0):
-                #if i != j and not ci.is_inside(cj):
-                    #out_of_bounds = out_of_bounds + 1
-
 
     def relocate_out_of_bounds_player(self):
         px, py, pw, ph = self.player.get_col_box()
@@ -64,10 +74,10 @@ class FirstLevel(GameState):
         if py + ph > by + bh:
             self.player.move_col_box(0, -py - ph + by + bh - 1)
 
-    def handle_event_internal(self, event):
+    def handle_event_internal(self, event: Event):
         # print("handled event {0}".format(event))
         self.events_handled = self.events_handled + 1
-        match event:
+        match event.name:
             case "stop-move-down" | "stop-move-up":
                 self.player.accelerate(y=0)
             case "stop-move-left" | "stop-move-right":
@@ -80,26 +90,54 @@ class FirstLevel(GameState):
                 self.player.accelerate(x=-2000)
             case "move-right":
                 self.player.accelerate(x=2000)
-            case "out-of-bounds":
-                # Move player inside the bounds in the shortest distance possible
-                pass
+            case "spawn_enemy_lineal_wave":
+                if event.params[0] == "top":
+                    thread = Thread(target=lineal_spawner, args=(2, event.params[1],))
+                    thread.start()
             case "escape":
-                self.__state_queue.get_nowait()  # this means "go back to previous state"
-                self.terminated = True
+                self.finish()
 
     def render_internal(self, percentage, graphics):
         for entity in self.sceneTree:
             entity.render(percentage, graphics)
 
-    def __spawn_enemy(self):
-        enemy_position = (100 + 100*self.__enemies_spawned, 100 + 100*self.__enemies_spawned)
+    def __spawn_enemy(self, enter_direction):
+        if enter_direction:
+            enemy_position = (50 + 50 * self.__enemies_spawned_top, -100)
+        else:
+            enemy_position = (-100, -50 + 50 * self.__enemies_spawned_top)
+
         enemy = Player(2000, 600)
         self.__enemies.append(enemy)
-        xa = [2000, -2000, 0, 0]
-        ya = [0, 0, 2000, -2000]
-        enemy.accelerate(x=xa[self.__direction ], y=ya[self.__direction ])
+
+        if enter_direction:
+            enemy.accelerate(y=2000)
+        else:
+            enemy.accelerate(x=2000)
+
         enemy.relocate_col_box(enemy_position[0], enemy_position[1])
         self.sceneTree.append(enemy)
         self.__collision_list.append(enemy)
-        self.__direction = (self.__direction + 1) % 4
 
+        thread = Thread(target=self.__remove_enemy, args=(enemy,))
+        thread.start()
+
+    def __remove_enemy(self, enemy):
+        time.sleep(10)
+        self.__enemies.remove(enemy)
+
+
+def lineal_spawner(delay, occurrences=1):
+    start = time.time()
+    spawned = 0
+    while spawned < occurrences:
+        elapsed = time.time() - start
+        if elapsed >= delay:
+            start = time.time()
+            spawned = spawned + 1
+            # todo: create enemy entities
+            #print("SPAWN ENEMY " + spawned.__str__() + " " + occurrences.__str__())
+
+
+def now():
+    return math.floor(time.time() * 1000)
