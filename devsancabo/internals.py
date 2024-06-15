@@ -8,7 +8,7 @@ from devsancabo.input import Event
 
 class GameState:
     def __init__(self, events: queue.Queue, state_queue: queue.LifoQueue):
-        self.__event_queue = events
+        self.event_queue = events
         self.events_handled = 0
         self.__state_queue = state_queue
         self.__terminated = False
@@ -18,8 +18,8 @@ class GameState:
         self.elapsed_millis = self.elapsed_millis + lag
         self.__state_queue.put(self)
         self.on_update(lag)
-        while not self.__event_queue.empty() and not self.__terminated:
-            event: Event = self.__event_queue.get_nowait()
+        while not self.event_queue.empty() and not self.__terminated:
+            event: Event = self.event_queue.get_nowait()
             self.handle_event(event)
 
     def render(self, percentage: float, graphics: Graphics):

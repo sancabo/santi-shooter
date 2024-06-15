@@ -11,13 +11,12 @@ ONE_SEC = 1000
 
 
 class Player(Drawable, Collisionable):
-    # todo implement life and damage
 
-    def __init__(self, slippery_factor: int = INFINITY_THRESHOLD, top_speed: float = INFINITY_THRESHOLD):
+    def __init__(self, slippery_factor: int = INFINITY_THRESHOLD, top_speed: float = INFINITY_THRESHOLD, hp = 500):
         self.__sprite_sheet = pygame.image.load("assets/car_sprites.png").convert_alpha()
 
         # Used for Collisionable
-        self.__player_box = pygame.Rect(100, 100, 40, 40)
+        self.__player_box = pygame.Rect(100, 100, 150, 150)
 
         self.__orientation = 180
         super().__init__(Sprite(self.__sprite_sheet), 100, 100, 40, 40)
@@ -29,6 +28,11 @@ class Player(Drawable, Collisionable):
         self.__acceleration_y = 0
         self.__natural_friction = slippery_factor  # 999999 infinite
 
+        self.__hit_points = hp
+        self.__inv_toggle = True
+        self.__invulnerable_ms_left = 0
+
+    # To do, reduce 'col box', center on 'render box'
     def get_col_box(self) -> (int, int, int, int):
         _tuple = (self.__player_box.left,
                  self.__player_box.top,
@@ -100,7 +104,8 @@ class Player(Drawable, Collisionable):
             if self.__current_speed_y < 0:
                 self.__current_speed_y = 0
 
-    def update_position(self, lag):
+    # todo shadow under player
+    def update_state(self, lag):
         deltas = self.__calculate_movement_deltas(lag, 0)
         self.__player_box = self.__player_box.move(deltas[0], deltas[1])
         # both speeds form a vector, according to its angle, adjust rotation
@@ -110,6 +115,7 @@ class Player(Drawable, Collisionable):
             if self.__orientation < 0:
                 self.__orientation = 360 + self.__orientation
             self.__orientation = (self.__orientation + 92) % 360
+        self.__update_state_invul(lag)
 
     def render(self, percentage, graphics, caca=None):
         deltas = self.__calculate_movement_deltas(0, percentage)
@@ -122,10 +128,28 @@ class Player(Drawable, Collisionable):
         sprite_sheet_box = pygame.Rect(x * size, y * size, size, size)
 
         # delegate to drawable
-        graphics.draw_entity(self.sprite, self.__player_box, sprite_sheet_box)
+        if self.__invulnerable_ms_left == 0:
+            graphics.draw_entity(self.sprite, self.__player_box, sprite_sheet_box)
+        else:
+            if self.__inv_toggle:
+                graphics.draw_entity(self.sprite, self.__player_box, sprite_sheet_box)
+            self.__inv_toggle = not self.__inv_toggle
+
 
     def accelerate(self, x=None, y=None):
         if x is not None:
             self.__acceleration_x = x
         if y is not None:
             self.__acceleration_y = y
+
+    def hurt(self, damage):
+        self.__hit_points = self.__hit_points - damage
+        self.__invulnerable_ms_left = 1000
+
+    def is_vulnerable(self):
+        return self.__invulnerable_ms_left == 0
+
+    def __update_state_invul(self, lag):
+        self.__invulnerable_ms_left = self.__invulnerable_ms_left - lag
+        if self.__invulnerable_ms_left < 0:
+            self.__invulnerable_ms_left = 0

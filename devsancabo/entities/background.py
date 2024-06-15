@@ -29,9 +29,9 @@ class Background(Drawable):
         self.__text = Sprite(text_surface)
         self.__text_2 = Sprite(text_surface_2)
         text_surface_rect = self.__text.get_image().get_rect()
-        text_surface_rect.center = (1280 // 2, 720 // 2 - 21 - 10)
+        text_surface_rect.center = (1440 // 2, 1020 // 2 - 21 - 10)
         text_surface_rect_2 = self.__text_2.get_image().get_rect()
-        text_surface_rect_2.center = (1280 // 2, (720 // 2) + 21 + 10)
+        text_surface_rect_2.center = (1440 // 2, (1020 // 2) + 21 + 10)
         self.__text_rect = text_surface_rect
         self.__text_rect_2 = text_surface_rect_2
 

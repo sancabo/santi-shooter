@@ -15,6 +15,9 @@ class Drawable:
     def set_image(self, sprite: Sprite):
         self.sprite = sprite
 
+    def set_position(self, x, y):
+        self.__position = (x, y)
+
     def get_position(self) -> (int, int):
         return self.__position
 
@@ -63,7 +66,6 @@ class Moveable:
     #   update_lag used to scale speed and acceleration for calculation
     #   maximum coord/millisecond this entity can move
     #   slippery_scale how much of it's speed it loses each at stop, and each update
-    # todo implement "Enemy" type. Use moveable to share behaviour with "Player"
     pass
 
 # todo implement attach method, to allow composition of game entities. They move and render together

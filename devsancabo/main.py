@@ -1,4 +1,5 @@
 import queue
+import threading
 import time
 import math
 import pygame
@@ -16,7 +17,7 @@ SCREEN_WIDTH = 1440
 SCREEN_HEIGHT = 1020
 
 class Game:
-    # todo implement sound
+    # (4)todo implement sound
     # for 60 times per second, we have to configure 17 ms per update
     __MS_PER_UPDATE = MS_PER_UPDATE
     # controls max fps. 0 for unlimited. 33 for 30 fps. 5 for 200 fps
