@@ -1,7 +1,6 @@
 import queue
 from abc import abstractmethod
 
-from devsancabo.entities.base import Collisionable
 from devsancabo.graphics import Graphics
 from devsancabo.input import Event
 
@@ -25,8 +24,11 @@ class GameState:
     def render(self, percentage: float, graphics: Graphics):
         self.render_internal(percentage, graphics)
 
-    def finish(self):
+    def go_previous_state(self):
         self.__state_queue.get_nowait()
+
+    def go_to_state(self, new_state):
+        self.__state_queue.put(new_state)
 
     @abstractmethod
     def render_internal(self, percentage: float, graphics: Graphics):
@@ -40,10 +42,6 @@ class GameState:
     def on_update(self, lag):
         pass
 
-    @abstractmethod
-    def get_collision_entities(self) -> [Collisionable]:
-        pass
-
     def handle_event(self, event: Event):
         match event:
             case "hardEscape":
@@ -54,17 +52,16 @@ class GameState:
             case _:
                 self.handle_event_internal(event)
 
-    def __del__(self):
-        print("handled {0} enter events".format(self.events_handled))
+    def alt_f4(self):
+        while not self.__state_queue.empty():
+            self.__state_queue.get_nowait()
+        self.__state_queue.put(NullGameState())
 
 
 class NullGameState(GameState):
 
-    def get_collision_entities(self) -> [Collisionable]:
-        raise GameClosedException()
-
-    def __init__(self, events: queue.Queue, state_queue: queue.LifoQueue):
-        GameState.__init__(self, events, state_queue)
+    def __init__(self):
+        GameState.__init__(self, queue.Queue(), queue.LifoQueue())
 
     def render_internal(self, percentage: float, graphics):
         # will never be called

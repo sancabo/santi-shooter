@@ -25,17 +25,26 @@ class Background(Drawable):
 
         font = pygame.font.Font('freesansbold.ttf', 42)
         text_surface = font.render("Move around with WASD", True, Graphics.WHITE)
-        text_surface_2 = font.render("Exit with ESC", True, Graphics.WHITE)
+        text_surface_2 = font.render("Exit with ESC. Pause with SPACE", True, Graphics.WHITE)
+        text_surface_3 = font.render("sancabo@github", True, Graphics.WHITE)
         self.__text = Sprite(text_surface)
         self.__text_2 = Sprite(text_surface_2)
+        self.__text_3 = Sprite(text_surface_3)
         text_surface_rect = self.__text.get_image().get_rect()
-        text_surface_rect.center = (1440 // 2, 1020 // 2 - 21 - 10)
+        text_surface_rect.center = (pygame.display.get_surface().get_width() // 2,
+                                    pygame.display.get_surface().get_height() // 2 - 42 - 20)
         text_surface_rect_2 = self.__text_2.get_image().get_rect()
-        text_surface_rect_2.center = (1440 // 2, (1020 // 2) + 21 + 10)
+        text_surface_rect_2.center = (pygame.display.get_surface().get_width() // 2,
+                                      pygame.display.get_surface().get_height() // 2)
+        text_surface_rect_3 = self.__text_3.get_image().get_rect()
+        text_surface_rect_3.center = (pygame.display.get_surface().get_width() // 2,
+                                      (pygame.display.get_surface().get_height() // 2) + 42 + 20)
         self.__text_rect = text_surface_rect
         self.__text_rect_2 = text_surface_rect_2
+        self.__text_rect_3 = text_surface_rect_3
 
     def render(self, percentage, graphics, sprite_sheet_box=None):
         graphics.draw_entity(self.sprite, (0, 0))
         graphics.draw_entity(self.__text, self.__text_rect)
         graphics.draw_entity(self.__text_2, self.__text_rect_2)
+        graphics.draw_entity(self.__text_3, self.__text_rect_3)

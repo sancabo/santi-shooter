@@ -24,3 +24,6 @@ class DamageText(Drawable):
         self.set_position(self.get_position()[0], self.get_position()[1] - 1*(percentage / self.__lag))
         self.sprite.get_image().set_alpha(self.__alpha)
         super().render(percentage, graphics)
+
+    def is_done(self):
+        return False

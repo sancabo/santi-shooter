@@ -67,5 +67,3 @@ class Moveable:
     #   maximum coord/millisecond this entity can move
     #   slippery_scale how much of it's speed it loses each at stop, and each update
     pass
-
-# todo implement attach method, to allow composition of game entities. They move and render together

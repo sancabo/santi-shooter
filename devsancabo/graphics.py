@@ -20,6 +20,9 @@ class Graphics:
 
 
 class Sprite:
+    # Used in an attempt to encapsulate graphics implementation
+    # In the future I'd like the game logic to be unaware of pygame
+    # Implement various adapters for pygame.*****
     def __init__(self, surface):
         self.__surface = surface
 

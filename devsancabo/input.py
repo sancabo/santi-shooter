@@ -25,6 +25,7 @@ class InputListener:
                 keyboard.KeyCode.from_char("a"):    [Event("move-left"), Event("stop-move-left")],
                 keyboard.Key.right:                 [Event("move-right"), Event("stop-move-right")],
                 keyboard.KeyCode.from_char("d"):    [Event("move-right"), Event("stop-move-right")],
+                keyboard.Key.space:                 [Event("pause"), Event("null")],
                 }
 
     def __init__(self, event_queue: queue.Queue):

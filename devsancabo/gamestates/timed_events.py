@@ -1,14 +1,7 @@
 import math
-import queue
-import time
-from threading import Thread
-
-from devsancabo.input import Event
 from queue import Queue
 
-enemies_top = list(range(1, 100, 1))
-enemies_left = list(range(1, 100, 1))
-
+from devsancabo.input import Event
 
 scenario_events = [
     (0, Event("spawn_enemy_lineal_wave", ["top", 15])),
@@ -38,25 +31,38 @@ scenario_events = [
     (89, Event("spawn_enemy_lineal_wave", ["top", 15])),
     (90, Event("spawn_enemy_lineal_wave", ["left", 15])),
     (91, Event("spawn_enemy_lineal_wave", ["right", 15])),
-    (92, Event("spawn_enemy_lineal_wave", ["bottom", 15]))
+    (92, Event("spawn_enemy_lineal_wave", ["bottom", 15])),
+    (93, Event("spawn_enemy_random_direction", [45, 0.5])),
+    (100, Event("spawn_enemy_random_direction", [30, 0.4])),
+    (107, Event("spawn_enemy_random_direction", [15, 0.2])),
+    # todo implement a couple more enemy patterns
+    (121, Event("stage_cleared", []))
 ]
 
+scenario_events_2 = [
+    (5, Event("stage_cleared", []))]
 
-def init_timed_events(event_queue: Queue):
-    scan_thread = Thread(target=scan, args=(event_queue,))
-    scan_thread.start()
-    return
+scenario_events3 = [
+    (1, Event("spawn_enemy_random_direction", [0.5, 45])),
+    (23, Event("spawn_enemy_random_direction", [0.4, 30])),
+    (35, Event("spawn_enemy_random_direction", [0.2, 45])),
+    (44, Event("spawn_enemy_random_direction", [0.1, 45])),
+    (50, Event("spawn_enemy_random_direction", [0.03, 200])),
+    (56, Event("stage_cleared", []))]
 
-def stop_timed_events():
-    pass
 
-# todo add ability to stop this thread on game exit
-def scan(event_queue: Queue):
-    previous = 0
-    for event in scenario_events:
-        time.sleep(event[0] - previous)
-        event_queue.put(event[1])
-        previous = event[0]
+class TimedEvents:
+    def __init__(self, event_queue: Queue):
+        self.__event_queue = event_queue
+        self.__previous = 0
+        self.__elapsed = 0
 
-def now():
-    return math.floor(time.time() * 1000)
+    def update_state(self, lag: int):
+        self.__elapsed = self.__elapsed + lag
+        if (self.__previous < len(scenario_events3) and
+                self.__elapsed / 1000 >= scenario_events3[self.__previous][0]):
+            self.__event_queue.put(scenario_events3[self.__previous][1])
+            self.__previous = self.__previous + 1
+
+    def is_done(self) -> bool:
+        return self.__previous >= len(scenario_events3)

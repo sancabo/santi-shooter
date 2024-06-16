@@ -14,15 +14,18 @@ class Enemy(Drawable, Collisionable):
 
     def __init__(self, top_speed: float = INFINITY_THRESHOLD, hp = 500):
         self.__original__sprite_sheet = pygame.image.load("assets/fire-circles.png").convert_alpha()
+        shadow = pygame.image.load("assets/glow-2.png").convert_alpha()
         self.__scale_factor = 2
         self.__sprite_size = (50, 50)
         self.__sprite_sheet_size = (8, 8)
 
         self.__sprite_sheet = pygame.transform.scale_by(self.__original__sprite_sheet, self.__scale_factor)
-        # self.__sprite_sheet = self.__sprite_sheet.convert_alpha()
+        shadow = pygame.transform.scale_by(shadow, self.__scale_factor*2)
+        self.__shadow = Sprite(shadow)
 
         # Used for Collisionable
         self.__player_box = pygame.Rect(100, 100, 50*self.__scale_factor, 50*self.__scale_factor)
+        self.__shadow_box = pygame.Rect(100, 100, 50*self.__scale_factor*2, 50*self.__scale_factor*2)
 
         self.__animation_cycle = 0
         super().__init__(Sprite(self.__sprite_sheet), 100, 100, 50*self.__scale_factor, 50*self.__scale_factor)
@@ -32,6 +35,12 @@ class Enemy(Drawable, Collisionable):
         self.__current_speed_y = 0
         self.__acceleration_x = 0
         self.__acceleration_y = 0
+
+    def set_speed_vector(self, direction: (int, int), modulus: float):
+        hypotenuse = math.hypot(direction[0], direction[1])
+        ratio = modulus / hypotenuse
+        self.__current_speed_x = direction[0] * ratio
+        self.__current_speed_y = direction[1] * ratio
 
     def get_col_box(self) -> (int, int, int, int):
         _tuple = (self.__player_box.left,
@@ -47,36 +56,9 @@ class Enemy(Drawable, Collisionable):
         self.__player_box = pygame.Rect(x, y, self.__player_box.width, self.__player_box.height)
 
     def __calculate_movement_deltas(self, lag, percentage):
-        self.__calculate_velocity_y(lag)
-
-        self.__calculate_velocity_x(lag)
-
         return (self.__current_speed_x * float(lag / ONE_SEC + (lag * percentage) / ONE_SEC),
                 self.__current_speed_y * float(lag / ONE_SEC + (lag * percentage) / ONE_SEC))
 
-    def __calculate_velocity_y(self, lag):
-        if self.__acceleration_y == 0:
-            self.__current_speed_y = 0
-        else:
-            self.__current_speed_y = self.__current_speed_y + float(self.__acceleration_y * lag / ONE_SEC)
-        if self.__current_speed_y.__abs__() > self.__top_speed:
-            if self.__current_speed_y > 0:
-                self.__current_speed_y = self.__top_speed
-            else:
-                self.__current_speed_y = -self.__top_speed
-
-    def __calculate_velocity_x(self, lag):
-        if self.__acceleration_x == 0:
-            self.__current_speed_x = 0
-        else:
-            self.__current_speed_x = self.__current_speed_x + float(self.__acceleration_x * lag / ONE_SEC)
-        if self.__current_speed_x.__abs__() > self.__top_speed:
-            if self.__current_speed_x > 0:
-                self.__current_speed_x = self.__top_speed
-            else:
-                self.__current_speed_x = -self.__top_speed
-
-    # todo glow under enemy
     def update_state(self, lag):
         deltas = self.__calculate_movement_deltas(lag, 0)
         self.__player_box = self.__player_box.move(deltas[0], deltas[1])
@@ -94,12 +76,18 @@ class Enemy(Drawable, Collisionable):
         draw = self.sprite
         self.__animation_cycle = (self.__animation_cycle + 2) % sprite_sheet_total
 
+        self.__shadow_box.center = (self.__player_box.center[0], self.__player_box.center[1] + 20)
+
+        graphics.draw_entity(self.__shadow, self.__shadow_box)
         # delegate to drawable
         graphics.draw_entity(draw, self.__player_box, sprite_sheet_box)
 
     def accelerate(self, x=None, y=None):
+        # it skips acceleration
         if x is not None:
-            self.__acceleration_x = x
+            self.__current_speed_x = x
         if y is not None:
-            self.__acceleration_y = y
+            self.__current_speed_y = y
 
+    def is_done(self):
+        return False
