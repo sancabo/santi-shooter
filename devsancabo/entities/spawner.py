@@ -1,7 +1,7 @@
 import math
 import random
 
-from devsancabo.entities.projectile import Projectile
+from devsancabo.entities.projectile.projectile import Projectile
 
 ONE_SECOND_MS = 1000
 
@@ -53,28 +53,28 @@ class LinealWaveEnemySpawner:
 
             case "top":
                 enemy_position = (spacing * offset, self.__bounds.get_col_box()[1] - out_of_bounds_distance)
-                accel = (0, speed)
+                spped_vector = (0, 1)
             case "bottom":
                 enemy_position = (
                     spacing * offset,
                     self.__bounds.get_col_box()[1] + self.__bounds.get_col_box()[3] + out_of_bounds_distance)
-                accel = (0, -speed)
+                spped_vector = (0, -1)
             case "left":
                 enemy_position = (self.__bounds.get_col_box()[0] - out_of_bounds_distance, spacing * offset)
-                accel = (speed, 0)
+                spped_vector = (1, 0)
             case "right":
                 enemy_position = (
                     self.__bounds.get_col_box()[0] + self.__bounds.get_col_box()[2] + out_of_bounds_distance,
                     spacing * offset)
-                accel = (-speed, 0)
+                spped_vector = (-1, 0)
             case _:
                 print("Error: called 'spawn enemy' without 'direction' argument")
                 enemy_position = (-500, -500)
-                accel = (0, 0)
+                spped_vector = (0, 0)
 
         enemy = Projectile(750, 600)
         enemy.relocate_col_box(enemy_position[0], enemy_position[1])
-        enemy.accelerate(y=accel[1], x=accel[0])
+        enemy.set_speed_vector(spped_vector[0], spped_vector[1], speed)
         self.__produced_enemies.append(enemy)
 
 

@@ -46,6 +46,9 @@ class Drawable:
     def get_position(self) -> (int, int):
         return self.__position
 
+    def set_dimensions(self, dim: (int, int)):
+        self.__dimensions = dim
+
     def get_dimensions(self) -> (int, int):
         return self.__dimensions
 
@@ -64,13 +67,20 @@ class SceneTreeLayer:
         self.__this_layer: [Drawable] = []
         self.__groups_in_this_layer: [str] = []
 
-    def add(self, entity: Drawable, z_index: int):
+    def add(self, entity: Drawable, z_index: int = 0):
         if z_index > 0:
             if self.__next_layer is None:
                 self.__next_layer = SceneTreeLayer()
             self.__next_layer.add(entity, z_index - 1)
         else:
             self.__this_layer.append(entity)
+
+    def remove(self, entity: Drawable):
+        if entity not in self.__this_layer:
+            if self.__next_layer is not None:
+                self.__next_layer.remove(entity)
+        else:
+            self.__this_layer.remove(entity)
 
     def create_group(self, name: str, z_index: int):
         if z_index > 0:
@@ -92,3 +102,10 @@ class SceneTreeLayer:
             entity.render(percentage, graphics, sprite_sheet_box)
         if self.__next_layer is not None:
             self.__next_layer.render(percentage, graphics, sprite_sheet_box)
+
+    def remove_group(self, name):
+        if name not in self.__groups_in_this_layer:
+            if self.__next_layer is not None:
+                self.__next_layer.remove_group( name)
+        else:
+            self.__this_layer.clear()

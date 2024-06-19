@@ -24,7 +24,7 @@ class Player(Drawable, Collisionable):
         self.__player_box = pygame.Rect(100, 100, 150, 150)
         self.__engine_sound = self.__audio.make_sound("assets/engine.wav")
 
-        self.__orientation = 180
+        self.__orientation: float = 180.00
         super().__init__(Sprite(self.__sprite_sheet), 100, 100, 40, 40)
 
         self.__top_speed = top_speed
@@ -166,7 +166,7 @@ class Player(Drawable, Collisionable):
             self.__orientation = math.atan2(self.__current_speed_y, self.__current_speed_x) * 57.2958
             if self.__orientation < 0:
                 self.__orientation = 360 + self.__orientation
-            self.__orientation = (self.__orientation + 92) % 360
+            self.__orientation = float((self.__orientation + 92) % 360)
         self.__update_state_invul(lag)
 
         if (self.__acceleration_y != 0 or self.__acceleration_x != 0) and not self.__is_playing:
@@ -250,6 +250,12 @@ class Player(Drawable, Collisionable):
         if self.__collision_enabled:
             return super().is_touching(other)
         return self.__collision_enabled
+
+    def get_speed_vector(self) -> (float, float):
+        return math.sin(self.__orientation*0.0174533), -math.cos(self.__orientation*0.0174533)
+
+    def get_position(self) -> (int, int):
+        return self.__player_box[0], self.__player_box[1]
 
     def is_done(self):
         return False

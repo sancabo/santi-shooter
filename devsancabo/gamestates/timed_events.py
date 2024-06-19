@@ -39,7 +39,7 @@ scenario_events = [
 ]
 
 scenario_events_2 = [
-    (1, Event("stage_cleared", []))]
+    (600, Event("stage_cleared", []))]
 
 scenario_events_3 = [
     (1, Event("spawn_enemy_random_direction", [0.5, 45])),
@@ -55,7 +55,7 @@ class TimedEvents:
         self.__event_queue = event_queue
         self.__previous = 0
         self.__elapsed = 0
-        self.__events = scenario_events_3
+        self.__events = scenario_events_2
 
     def update_state(self, lag: int):
         self.__elapsed = self.__elapsed + lag

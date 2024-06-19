@@ -25,11 +25,10 @@ class Projectile(Drawable, Collisionable):
         shadow = pygame.transform.scale_by(shadow, self.__scale_factor*2)
         self.__shadow = Sprite(shadow)
 
-        # Used for Collisionable
         self.__player_box = pygame.Rect(100, 100, 50*self.__scale_factor, 50*self.__scale_factor)
         self.__shadow_box = pygame.Rect(100, 100, 50*self.__scale_factor*2, 50*self.__scale_factor*2)
 
-        self.__animation_cycle = 0
+        self.animation_cycle = 0
         super().__init__(Sprite(self.__sprite_sheet), 100, 100, 50*self.__scale_factor, 50*self.__scale_factor)
 
         self.__current_speed_x = 0
@@ -54,40 +53,33 @@ class Projectile(Drawable, Collisionable):
     def relocate_col_box(self, x, y):
         self.__player_box = pygame.Rect(x, y, self.__player_box.width, self.__player_box.height)
 
-    def __calculate_movement_deltas(self, lag, percentage):
+    def calculate_movement_deltas(self, lag, percentage):
         return (self.__current_speed_x * float(lag / ONE_SEC + (lag * percentage) / ONE_SEC),
                 self.__current_speed_y * float(lag / ONE_SEC + (lag * percentage) / ONE_SEC))
 
     def update_state(self, lag):
         self.__time_alive = self.__time_alive + lag
-        deltas = self.__calculate_movement_deltas(lag, 0)
+        deltas = self.calculate_movement_deltas(lag, 0)
         self.__player_box = self.__player_box.move(deltas[0], deltas[1])
         # both speeds form a vector, according to its angle, adjust rotation
         # need to transform to degrees
 
     def render(self, percentage, graphics, caca=None):
-        deltas = self.__calculate_movement_deltas(0, percentage)
+        deltas = self.calculate_movement_deltas(0, percentage)
         self.__player_box = self.__player_box.move(deltas[0], deltas[1])
         sprite_sheet_total = self.__sprite_sheet_size[0]*self.__sprite_sheet_size[1]
         # according to rotation, select correct sprite
-        x, y = self.__animation_cycle % 8, self.__animation_cycle//self.__sprite_sheet_size[1]
+        x, y = self.animation_cycle % 8, self.animation_cycle // self.__sprite_sheet_size[1]
         size = self.__sprite_size[0] * self.__scale_factor
         sprite_sheet_box = pygame.Rect(x, y * size, size, size)
         draw = self.sprite
-        self.__animation_cycle = (self.__animation_cycle + 2) % sprite_sheet_total
+        self.animation_cycle = (self.animation_cycle + 2) % sprite_sheet_total
 
         self.__shadow_box.center = (self.__player_box.center[0], self.__player_box.center[1] + 20)
 
         graphics.draw_entity(self.__shadow, self.__shadow_box)
         # delegate to drawable
         graphics.draw_entity(draw, self.__player_box, sprite_sheet_box)
-
-    def accelerate(self, x=None, y=None):
-        # it skips acceleration
-        if x is not None:
-            self.__current_speed_x = x
-        if y is not None:
-            self.__current_speed_y = y
 
     def is_done(self):
         return self.__time_alive > self.__ttl
