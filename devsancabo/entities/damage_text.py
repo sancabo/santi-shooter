@@ -1,11 +1,10 @@
 import pygame
 
-from devsancabo.entities.base import Drawable
-from devsancabo.graphics import Sprite, Graphics
+from devsancabo.graphics import Sprite, Graphics, Drawable
 
 
 class DamageText(Drawable):
-    def __init__(self, text, x, y):
+    def __init__(self, text, x, y, ttl=500):
         font = pygame.font.Font('freesansbold.ttf', 24)
         text_surface = font.render(text, True, Graphics.WHITE)
         text_s = Sprite(text_surface)
@@ -14,8 +13,11 @@ class DamageText(Drawable):
         super().__init__(text_s, x, y, text_surface_rect.width, text_surface_rect.height)
         self.__alpha = 255
         self.__lag = 60
+        self.__ttl = ttl
+        self.__time_alive = 0
 
     def update_state(self, lag):
+        self.__time_alive = self.__time_alive + lag
         self.set_position(self.get_position()[0], self.get_position()[1] - 1)
         self.__lag = lag
 
@@ -26,4 +28,4 @@ class DamageText(Drawable):
         super().render(percentage, graphics)
 
     def is_done(self):
-        return False
+        return self.__time_alive > self.__ttl

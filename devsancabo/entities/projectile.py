@@ -2,22 +2,24 @@ import math
 
 import pygame
 
-from devsancabo.entities.base import Drawable, Collisionable
-from devsancabo.graphics import Sprite
+from devsancabo.entities.base import Collisionable
+from devsancabo.graphics import Sprite, Drawable
 
 INFINITY_THRESHOLD = 999999
 
 ONE_SEC = 1000
 
 
-class Enemy(Drawable, Collisionable):
+class Projectile(Drawable, Collisionable):
 
-    def __init__(self, top_speed: float = INFINITY_THRESHOLD, hp = 500):
+    def __init__(self, time_to_live_ms: int = 10000):
+        self.__time_alive = 0
         self.__original__sprite_sheet = pygame.image.load("assets/fire-circles.png").convert_alpha()
         shadow = pygame.image.load("assets/glow-2.png").convert_alpha()
         self.__scale_factor = 2
         self.__sprite_size = (50, 50)
         self.__sprite_sheet_size = (8, 8)
+        self.__ttl = time_to_live_ms
 
         self.__sprite_sheet = pygame.transform.scale_by(self.__original__sprite_sheet, self.__scale_factor)
         shadow = pygame.transform.scale_by(shadow, self.__scale_factor*2)
@@ -30,11 +32,8 @@ class Enemy(Drawable, Collisionable):
         self.__animation_cycle = 0
         super().__init__(Sprite(self.__sprite_sheet), 100, 100, 50*self.__scale_factor, 50*self.__scale_factor)
 
-        self.__top_speed = top_speed
         self.__current_speed_x = 0
         self.__current_speed_y = 0
-        self.__acceleration_x = 0
-        self.__acceleration_y = 0
 
     def set_speed_vector(self, direction: (int, int), modulus: float):
         hypotenuse = math.hypot(direction[0], direction[1])
@@ -60,6 +59,7 @@ class Enemy(Drawable, Collisionable):
                 self.__current_speed_y * float(lag / ONE_SEC + (lag * percentage) / ONE_SEC))
 
     def update_state(self, lag):
+        self.__time_alive = self.__time_alive + lag
         deltas = self.__calculate_movement_deltas(lag, 0)
         self.__player_box = self.__player_box.move(deltas[0], deltas[1])
         # both speeds form a vector, according to its angle, adjust rotation
@@ -90,4 +90,4 @@ class Enemy(Drawable, Collisionable):
             self.__current_speed_y = y
 
     def is_done(self):
-        return False
+        return self.__time_alive > self.__ttl

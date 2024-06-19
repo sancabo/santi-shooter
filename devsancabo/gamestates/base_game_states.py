@@ -1,12 +1,13 @@
 import queue
 from abc import abstractmethod
 
+from devsancabo.audio import Audio
 from devsancabo.graphics import Graphics
 from devsancabo.input import Event
 
 
 class GameState:
-    def __init__(self, events: queue.Queue, state_queue: queue.LifoQueue):
+    def __init__(self, events: queue.Queue, state_queue: queue.LifoQueue, audio: Audio):
         self.event_queue = events
         self.events_handled = 0
         self.__state_queue = state_queue
@@ -61,7 +62,7 @@ class GameState:
 class NullGameState(GameState):
 
     def __init__(self):
-        GameState.__init__(self, queue.Queue(), queue.LifoQueue())
+        GameState.__init__(self, queue.Queue(), queue.LifoQueue(), Audio())
 
     def render_internal(self, percentage: float, graphics):
         # will never be called

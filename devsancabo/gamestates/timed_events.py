@@ -35,14 +35,13 @@ scenario_events = [
     (93, Event("spawn_enemy_random_direction", [45, 0.5])),
     (100, Event("spawn_enemy_random_direction", [30, 0.4])),
     (107, Event("spawn_enemy_random_direction", [15, 0.2])),
-    # todo implement a couple more enemy patterns
     (121, Event("stage_cleared", []))
 ]
 
 scenario_events_2 = [
-    (5, Event("stage_cleared", []))]
+    (1, Event("stage_cleared", []))]
 
-scenario_events3 = [
+scenario_events_3 = [
     (1, Event("spawn_enemy_random_direction", [0.5, 45])),
     (23, Event("spawn_enemy_random_direction", [0.4, 30])),
     (35, Event("spawn_enemy_random_direction", [0.2, 45])),
@@ -56,13 +55,14 @@ class TimedEvents:
         self.__event_queue = event_queue
         self.__previous = 0
         self.__elapsed = 0
+        self.__events = scenario_events_3
 
     def update_state(self, lag: int):
         self.__elapsed = self.__elapsed + lag
-        if (self.__previous < len(scenario_events3) and
-                self.__elapsed / 1000 >= scenario_events3[self.__previous][0]):
-            self.__event_queue.put(scenario_events3[self.__previous][1])
+        if (self.__previous < len(self.__events) and
+                self.__elapsed / 1000 >= self.__events[self.__previous][0]):
+            self.__event_queue.put(self.__events[self.__previous][1])
             self.__previous = self.__previous + 1
 
     def is_done(self) -> bool:
-        return self.__previous >= len(scenario_events3)
+        return self.__previous >= len(self.__events)

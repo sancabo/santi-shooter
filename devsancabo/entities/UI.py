@@ -1,7 +1,6 @@
 import pygame
 
-from devsancabo.entities.base import Drawable
-from devsancabo.graphics import Sprite
+from devsancabo.graphics import Sprite, Drawable
 
 
 class UserInterface(Drawable):
@@ -19,6 +18,6 @@ class UserInterface(Drawable):
         if self.__percentage_filled > 1:
             self.__percentage_filled = 1
         self.__hp_bar.fill((0, 0, 0), pygame.Rect(500 - 500*(1 - self.__percentage_filled), 0,
-                                                  500*(1 - self.__percentage_filled), 20))
+                                                  501*(1 - self.__percentage_filled), 20))
         self.set_image(Sprite(self.__hp_bar))
 

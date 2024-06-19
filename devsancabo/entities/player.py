@@ -2,8 +2,9 @@ import math
 
 import pygame
 
-from devsancabo.entities.base import Drawable, Collisionable
-from devsancabo.graphics import Sprite
+from devsancabo.audio import Audio
+from devsancabo.entities.base import Collisionable
+from devsancabo.graphics import Sprite, Drawable
 
 INFINITY_THRESHOLD = 999999
 
@@ -12,15 +13,16 @@ ONE_SEC = 1000
 
 class Player(Drawable, Collisionable):
 
-    def __init__(self, slippery_factor: int = INFINITY_THRESHOLD, top_speed: float = INFINITY_THRESHOLD, hp=500):
-        self.__sound_playing = False
+    def __init__(self, audio: Audio, slippery_factor: int = INFINITY_THRESHOLD, top_speed: float = INFINITY_THRESHOLD,
+                 hp=500):
+        self.__audio = audio
+        self.__is_playing = False
         self.__sprite_sheet = pygame.image.load("assets/car_sprites.png").convert_alpha()
         self.__state = "alive"
 
         # Used for Collisionable
         self.__player_box = pygame.Rect(100, 100, 150, 150)
-        self.__engine_sound = pygame.mixer.Sound("assets/engine.wav")
-        self.__engine_sound.set_volume(0.2)
+        self.__engine_sound = self.__audio.make_sound("assets/engine.wav")
 
         self.__orientation = 180
         super().__init__(Sprite(self.__sprite_sheet), 100, 100, 40, 40)
@@ -66,6 +68,7 @@ class Player(Drawable, Collisionable):
         self.__death_sprite_number = 0
 
         # To do, reduce 'col box', center on 'render box'
+
     def get_col_box(self) -> (int, int, int, int):
         col_box = pygame.Rect(self.__player_box.left,
                               self.__player_box.top,
@@ -83,6 +86,18 @@ class Player(Drawable, Collisionable):
 
     def relocate_col_box(self, x, y):
         self.__player_box = pygame.Rect(x, y, self.__player_box.width, self.__player_box.height)
+
+    def relocate_in_bounds(self, bounds):
+        px, py, pw, ph = self.get_col_box()
+        bx, by, bw, bh = bounds.get_col_box()
+        if px < bx:
+            self.move_col_box(bx - px + 1, 0)
+        if px + pw > bx + bw:
+            self.move_col_box(-px - pw + bx + bw - 1, 0)
+        if py < by:
+            self.move_col_box(0, by - py + 1)
+        if py + ph > by + bh:
+            self.move_col_box(0, -py - ph + by + bh - 1)
 
     def __calculate_movement_deltas(self, lag, percentage):
         self.__calculate_velocity_y(lag)
@@ -153,14 +168,15 @@ class Player(Drawable, Collisionable):
                 self.__orientation = 360 + self.__orientation
             self.__orientation = (self.__orientation + 92) % 360
         self.__update_state_invul(lag)
-        if self.__acceleration_y != 0 or self.__acceleration_x != 0:
-            if not self.__sound_playing:
-                self.__engine_sound.play()
-                self.__sound_playing = True
-        else:
-            if self.__sound_playing:
-                self.__engine_sound.stop()
-                self.__sound_playing = False
+
+        if (self.__acceleration_y != 0 or self.__acceleration_x != 0) and not self.__is_playing:
+            self.__engine_sound.set_volume(self.__audio.get_gobal_volume())
+            self.__engine_sound.play(-1)
+            self.__is_playing = True
+        elif self.__acceleration_y == 0 and self.__acceleration_x == 0 and self.__is_playing:
+            self.__engine_sound.set_volume(self.__audio.get_gobal_volume())
+            self.__engine_sound.stop()
+            self.__is_playing = False
 
     def render(self, percentage, graphics, caca=None):
         if self.__state == "alive":
@@ -185,7 +201,6 @@ class Player(Drawable, Collisionable):
             graphics.draw_entity(Sprite(self.__sprite_sheet_dead[self.__death_sprite_number]),
                                  pygame.Rect(self.__player_box.left, self.__player_box.top, size, size))
             self.__death_sprite_number = (self.__death_sprite_number + 1) % 25
-
 
     def accelerate(self, x=None, y=None):
         if x is not None:
@@ -215,9 +230,9 @@ class Player(Drawable, Collisionable):
         self.__acceleration_x = 0
 
     def stop_sounds(self):
-        if self.__sound_playing:
+        if self.__is_playing:
             self.__engine_sound.stop()
-            self.__sound_playing = False
+            self.__is_playing = False
 
     def is_dead(self):
         return self.__hit_points <= 0

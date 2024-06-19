@@ -1,6 +1,7 @@
 
 
-from devsancabo.entities.base import Drawable, Collisionable
+from devsancabo.entities.base import Collisionable
+from devsancabo.graphics import Drawable
 
 
 class Bounds(Drawable, Collisionable):

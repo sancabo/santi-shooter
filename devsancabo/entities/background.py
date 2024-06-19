@@ -1,7 +1,6 @@
 import pygame
 
-from devsancabo.entities.base import Drawable
-from devsancabo.graphics import Sprite, Graphics
+from devsancabo.graphics import Sprite, Graphics, Drawable
 
 
 class Background(Drawable):

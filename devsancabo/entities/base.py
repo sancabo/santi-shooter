@@ -1,37 +1,5 @@
 from abc import abstractmethod
 
-import pygame
-
-from devsancabo.graphics import Sprite
-
-
-class Drawable:
-
-    def __init__(self, sprite: Sprite, x=0, y=0, width=0, height=0):
-        self.sprite = sprite
-        self.__position = (x, y)
-        self.__dimensions = (width, height)
-
-    def set_image(self, sprite: Sprite):
-        self.sprite = sprite
-
-    def set_position(self, x, y):
-        self.__position = (x, y)
-
-    def get_position(self) -> (int, int):
-        return self.__position
-
-    def get_dimensions(self) -> (int, int):
-        return self.__dimensions
-
-    def render(self, percentage, graphics, sprite_sheet_box=None):
-        graphics.draw_entity(
-            self.sprite, pygame.Rect(self.__position[0],
-                                     self.__position[1],
-                                     self.__dimensions[0],
-                                     self.__dimensions[1]),
-            sprite_sheet_box)
-
 
 class Collisionable:
     @abstractmethod
@@ -54,7 +22,6 @@ class Collisionable:
         x2, y2, w2, h2 = other.get_col_box()
 
         return x2 < x1 and x1 + w1 < x2 + w2 and y2 < y1 and y1 + h1 < y2 + h2
-
 
 class Moveable:
     # Moveable.apply_accel(accel, residual_lag)

@@ -1,7 +1,7 @@
 import math
 import random
 
-from devsancabo.entities.enemy import Enemy
+from devsancabo.entities.projectile import Projectile
 
 ONE_SECOND_MS = 1000
 
@@ -29,7 +29,7 @@ class LinealWaveEnemySpawner:
         else:
             self.__idle_lifetime = self.__idle_lifetime + lag
 
-    def get_produced_enemies(self) -> [Enemy]:
+    def get_produced_enemies(self) -> [Projectile]:
         result = self.__produced_enemies.copy()
         for e in result:
             self.__total_produced_enemies.append(e)
@@ -43,7 +43,7 @@ class LinealWaveEnemySpawner:
         return self.__idle_lifetime / ONE_SECOND_MS >= self.__terminate_after_sec
 
     def is_done(self):
-        return False
+        return self.__idle_lifetime / ONE_SECOND_MS >= self.__terminate_after_sec
 
     def __spawn_enemy_generic(self, enter_direction, offset):
         spacing = 150
@@ -72,7 +72,7 @@ class LinealWaveEnemySpawner:
                 enemy_position = (-500, -500)
                 accel = (0, 0)
 
-        enemy = Enemy(750, 600)
+        enemy = Projectile(750, 600)
         enemy.relocate_col_box(enemy_position[0], enemy_position[1])
         enemy.accelerate(y=accel[1], x=accel[0])
         self.__produced_enemies.append(enemy)
@@ -102,7 +102,7 @@ class RandomDirectionEnemySpawner:
         else:
             self.__idle_lifetime = self.__idle_lifetime + lag
 
-    def get_produced_enemies(self) -> [Enemy]:
+    def get_produced_enemies(self) -> [Projectile]:
         result = self.__produced_enemies.copy()
         for e in result:
             self.__total_produced_enemies.append(e)
@@ -116,7 +116,7 @@ class RandomDirectionEnemySpawner:
         return self.__idle_lifetime / ONE_SECOND_MS >= self.__terminate_after_sec
 
     def is_done(self):
-        return False
+        return self.__idle_lifetime / ONE_SECOND_MS >= self.__terminate_after_sec
 
     def __spawn_enemy_random(self):
         out_of_bounds_distance = 300
@@ -147,7 +147,7 @@ class RandomDirectionEnemySpawner:
         hyp = math.hypot(non_normalized_speed[0], non_normalized_speed[1])
         speed = (non_normalized_speed[0] / hyp, non_normalized_speed[1] / hyp)
 
-        enemy = Enemy(top_speed, 600)
+        enemy = Projectile()
         enemy.relocate_col_box(enemy_position[0], enemy_position[1])
         enemy.set_speed_vector(speed, top_speed)
         self.__produced_enemies.append(enemy)
