@@ -3,7 +3,7 @@
 from devsancabo.entities.base import Collisionable
 from devsancabo.graphics import Drawable
 
-
+# todo move bounds with camera
 class Bounds(Drawable, Collisionable):
 
     def move_col_box(self, x, y):
@@ -19,6 +19,6 @@ class Bounds(Drawable, Collisionable):
     def __init__(self, x, y, w, h, sprite=None):
         super().__init__(sprite, x, y, w, h)
 
-    def render(self, percentage, graphics, sprite_sheet_box=None):
+    def render(self, percentage, graphics, camera=None, sprite_sheet_box=None):
         # It's invisible
         pass

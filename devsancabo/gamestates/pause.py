@@ -12,19 +12,27 @@ from devsancabo.gamestates.base_game_states import GameState
 
 
 class PauseMenu(GameState):
-    def __init__(self, events: Queue, state_queue: LifoQueue, audio: Audio,
-                 scene_tree: SceneTreeLayer, center: (int, int), previous_game_state: GameState = None):
+    def __init__(self,
+                 events: Queue,
+                 state_queue: LifoQueue,
+                 audio: Audio,
+                 scene_tree: SceneTreeLayer,
+                 state: GameState,
+                 center: (int, int),
+                 previous_game_state: GameState = None):
         self.__scene: [Drawable] = []
         self.__center = center
+        self.__state = state
         self.__scene_tree = scene_tree
-        self.__scene_tree.create_group("pause", 10)
         self.previous_game_state = previous_game_state
-        self.__scene_tree.add_to_group(self.generate_rectangle(), "pause")
-        self.__scene_tree.add_to_group(Text("PAUSE", 60, center, (255, 255, 255), (4, (255, 75, 40))), "pause")
+        self.__pause_scene_tree = SceneTreeLayer()
+        self.__pause_scene_tree.add(self.generate_rectangle(), 1)
+        self.__pause_scene_tree.add(Text("PAUSE", 60, center, (255, 255, 255), (4, (0, 0, 0))), 2)
         super().__init__(events, state_queue, audio)
 
     def render_internal(self, percentage: float, graphics: Graphics):
-        self.__scene_tree.render(percentage, graphics)
+        self.__state.render_internal(percentage, graphics)
+        self.__pause_scene_tree.render(percentage, graphics)
 
     def generate_rectangle(self) -> Drawable:
         rect = pygame.Rect(500, 500, 750, 500)

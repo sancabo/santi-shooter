@@ -27,6 +27,7 @@ class InputListener:
                 keyboard.Key.right: [Event("move-right"), Event("stop-move-right")],
                 keyboard.KeyCode.from_char("d"): [Event("move-right"), Event("stop-move-right")],
                 keyboard.Key.space: [Event("pause"), Event("null")],
+                keyboard.KeyCode.from_char("r"): [Event("restart"), Event("stop-restart")],
                 }
 
     cooldown_map = {
@@ -41,7 +42,8 @@ class InputListener:
         keyboard.KeyCode.from_char("a"): 0,
         keyboard.Key.right: 0,
         keyboard.KeyCode.from_char("d"): 0,
-        keyboard.Key.space: 0
+        keyboard.Key.space: 0,
+        keyboard.KeyCode.from_char("r"): 0
     }
 
     def __init__(self, event_queue: queue.Queue):

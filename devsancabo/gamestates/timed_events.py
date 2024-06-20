@@ -55,7 +55,7 @@ class TimedEvents:
         self.__event_queue = event_queue
         self.__previous = 0
         self.__elapsed = 0
-        self.__events = scenario_events_2
+        self.__events = scenario_events_3
 
     def update_state(self, lag: int):
         self.__elapsed = self.__elapsed + lag

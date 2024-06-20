@@ -16,6 +16,7 @@ MIN_MS_PER_RENDER = 5
 SCREEN_WIDTH = 1440
 SCREEN_HEIGHT = 1020
 GLOBAL_VOLUME = 0.20
+FULLSCREEN = True
 
 
 class Game:
@@ -27,6 +28,7 @@ class Game:
     __SCREEN_WIDTH = SCREEN_WIDTH
     __SCREEN_HEIGHT = SCREEN_HEIGHT
     __GLOBAL_VOLUME = GLOBAL_VOLUME
+    __FULLSCREEN = FULLSCREEN
 
     def __init__(self):
         self.lag_render: int = 0
@@ -43,7 +45,7 @@ class Game:
 
     def run(self):
         # initialize graphics, audio, and input
-        graphics = Graphics(self.__SCREEN_WIDTH, self.__SCREEN_HEIGHT)
+        graphics = Graphics(self.__SCREEN_WIDTH, self.__SCREEN_HEIGHT, self.__FULLSCREEN)
         audio = Audio()
         audio.set_volume(self.__GLOBAL_VOLUME)
         input_listener = InputListener(self.event_queue)
@@ -52,7 +54,7 @@ class Game:
 
         # initialize first game state
         self.game_state_stack.put(NullGameState())
-        self.game_state_stack.put(FirstLevel(self.event_queue, self.game_state_stack, audio))
+        self.game_state_stack.put(FirstLevel(self.event_queue, self.game_state_stack, audio, graphics.get_window_size()))
         current_game_state: GameState = self.game_state_stack.get_nowait()
 
         while self.is_running:

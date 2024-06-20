@@ -1,4 +1,3 @@
-import devsancabo.entities
 from queue import Queue, LifoQueue
 
 import pygame.display
@@ -7,16 +6,18 @@ from devsancabo.audio import Audio
 from devsancabo.entities.UI import UserInterface
 from devsancabo.entities.background import Background
 from devsancabo.entities.bounds import Bounds
+from devsancabo.entities.camera import Camera
 from devsancabo.entities.damage_text import DamageText
 from devsancabo.entities.player import Player
 from devsancabo.entities.projectile.projectile import Projectile
-from devsancabo.entities.projectile.shot import Shot
+from devsancabo.entities.projectile.shot_2 import Shot
 from devsancabo.entities.spawner import LinealWaveEnemySpawner, RandomDirectionEnemySpawner
 from devsancabo.entities.text import Text
 from devsancabo.gamestates.base_game_states import GameState
+from devsancabo.gamestates.gameover import Gameover
 from devsancabo.gamestates.pause import PauseMenu
 from devsancabo.gamestates.timed_events import TimedEvents
-from devsancabo.graphics import Drawable, SceneTreeLayer
+from devsancabo.graphics import SceneTreeLayer
 from devsancabo.input import Event
 
 GOLDEN_YELLOW_RGB = (255, 200, 100)
@@ -28,14 +29,13 @@ CLEARED_MESSAGE = "Stage cleared! Press Esc to exit."
 
 class FirstLevel(GameState):
 
-    def __init__(self, event_queue: Queue, state_queue: LifoQueue, audio: Audio):
+    def __init__(self, event_queue: Queue, state_queue: LifoQueue, audio: Audio, viewport: tuple[int, int]):
         super().__init__(event_queue, state_queue, audio)
         self.__audio = audio
         self.__sub_state = "normal"
         self.__updateables = []
         self.__state_queue = state_queue
         self.__event_queue = event_queue
-        # V1.1 todo add 'layers' to scene tree
         self.__scene_tree: SceneTreeLayer = SceneTreeLayer()
         self.__play_victory_music = 0
         self.__audio.play_music('assets/battle-theme.mp3')
@@ -53,10 +53,14 @@ class FirstLevel(GameState):
         self.__scene_tree.add(self.__background)
         self.__scene_tree.add(self.__player, 3)
         self.__scene_tree.add(self.__bounds)
-        # V1.1 todo implement camera
+        self.__scene_tree.add(self.__ui)
+
         self.__updateables.append(self.__player)
         self.__timed_events = TimedEvents(event_queue)
         self.__updateables.append(self.__timed_events)
+
+        self.__viewport = viewport
+        self.__camera = Camera((0, 0, viewport[0], viewport[1]), "camera-01")
 
     def on_update(self, lag):
         for i, updatable in enumerate(self.__updateables.copy()):
@@ -83,6 +87,7 @@ class FirstLevel(GameState):
             self.__event_queue.put(Event("player_died", []))
         if self.__play_victory_music == 1 and not pygame.mixer.music.get_busy():
             self.show_victory_screen()
+        self.__camera.move_entity((1, 0))
 
     def show_victory_screen(self):
         self.__player.stop_sounds()
@@ -122,15 +127,13 @@ class FirstLevel(GameState):
                 if self.__sub_state == "normal":
                     self.__player.accelerate(x=2000)
             case "shoot":
-                # todo encapsulate this behaviour on player
-                # todo add the player's speed to projectile speed
-                # todo center the projectile starting position
-                shot = Shot(500)
-                shot.set_entity_position((self.__player.get_position()[0], self.__player.get_position()[1]))
-                shot.set_speed_vector(self.__player.get_speed_vector(), 1300)
-                self.__scene_tree.add(shot, 1)
-                self.__updateables.append(shot)
-                self.__shots.append(shot)
+                if self.__sub_state == "normal":
+                    # todo encapsulate shooting weapon on player
+                    shot = Shot(self.__player.get_center(), 750)
+                    shot.set_speed_vector(self.__player.get_speed_vector(), 1300)
+                    self.__scene_tree.add(shot, 1)
+                    self.__updateables.append(shot)
+                    self.__shots.append(shot)
             case "spawn_enemy_lineal_wave":
                 print("spawn enemy lineal wave")
                 spawner = LinealWaveEnemySpawner(1, event.params[0], self.__bounds, event.params[1])
@@ -158,50 +161,32 @@ class FirstLevel(GameState):
                     pygame.mixer.music.fadeout(7000)
                     self.__play_victory_music = 1
             case "pause":
-                self.__player.stop_sounds()
-                self.__audio.play_sound("assets/pause.wav")
-                bounds = pygame.Rect(self.__bounds.get_col_box())
-                self.__state_queue.put(PauseMenu(self.__event_queue,
-                                                 self.__state_queue,
-                                                 self.__audio,
-                                                 self.__scene_tree,
-                                                 bounds.center, self))
+                if self.__sub_state == "normal":
+                    self.__player.stop_sounds()
+                    self.__audio.play_sound("assets/pause.wav")
+                    bounds = pygame.Rect(self.__bounds.get_col_box())
+                    self.__state_queue.put(PauseMenu(self.__event_queue,
+                                                     self.__state_queue,
+                                                     self.__audio,
+                                                     self.__scene_tree,
+                                                     self,
+                                                     bounds.center, self))
             case "player_died":
                 if self.__sub_state != "game_over":
                     self.__sub_state = "game_over"
-                    self.__updateables.append(Gameover(self.__player, self.__scene_tree, self.__bounds, self.__audio))
+                    self.__state_queue.put(Gameover(self.__event_queue,
+                                                    self.__state_queue,
+                                                    self.__audio,
+                                                    self.__player,
+                                                    self,
+                                                    self.__bounds.get_col_box()))
                     # show Press R to Restart. Press Esc to leave
             case "escape":
                 self.go_previous_state()
+            case "restart":
+                if self.__sub_state == "game_over":
+                    self.go_previous_state()
+                    self.go_to_state(FirstLevel(self.event_queue, self.state_queue, self.__audio, self.__viewport))
 
     def render_internal(self, percentage, graphics):
-        self.__scene_tree.render(percentage, graphics)
-
-class Gameover:
-    def __init__(self, player, scene_tree, bounds, audio: Audio):
-        self.__elapsed = 0
-        self.__done = False
-        self.__player = player
-        self.__scene_tree= scene_tree
-        self.__bounds = bounds
-        print("Game over.")
-        pygame.mixer.music.fadeout(2000)
-        self.__player.stop_sounds()
-        self.__player.stop_movement()
-        self.__player.disable_collision()
-        self.__audio = audio
-        self.__audio.play_sound("assets/catching-fire.mp3", 0)
-        self.__player.kill()
-
-    def update_state(self, lag):
-        self.__elapsed = self.__elapsed + lag
-        if self.__elapsed >= 2000 and not self.__done:
-
-            self.__audio.play_sound("assets/game-over.wav")
-            bounds = pygame.Rect(self.__bounds.get_col_box())
-            bounds = bounds.move(0, -bounds.height / 4)
-            self.__scene_tree.add(Text("You died! Press Esc to leave", 60, bounds.center, GOLDEN_YELLOW_RGB), 10)
-            self.__done = True
-
-    def is_done(self):
-        return self.__done
+        self.__scene_tree.render(percentage, graphics, self.__camera)

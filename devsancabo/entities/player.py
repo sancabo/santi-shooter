@@ -178,7 +178,9 @@ class Player(Drawable, Collisionable):
             self.__engine_sound.stop()
             self.__is_playing = False
 
-    def render(self, percentage, graphics, caca=None):
+    def render(self, percentage, graphics, camera=None, sprite_sheet_box=None):
+        # do something with camera
+        # encapsulate drawing to drawable
         if self.__state == "alive":
             deltas = self.__calculate_movement_deltas(0, percentage)
             self.__player_box = self.__player_box.move(deltas[0], deltas[1])
@@ -189,17 +191,23 @@ class Player(Drawable, Collisionable):
             size = 830 // 5
             sprite_sheet_box = pygame.Rect(x * size, y * size, size, size)
 
+            self.set_image(self.sprite)
+            self.set_position(self.__player_box.left, self.__player_box.top)
+            self.set_dimensions((self.__player_box.width, self.__player_box.height))
+
             # delegate to drawable
             if self.__invulnerable_ms_left == 0:
-                graphics.draw_entity(self.sprite, self.__player_box, sprite_sheet_box)
+                super().render(percentage, graphics, camera, sprite_sheet_box)
             else:
                 if self.__inv_toggle:
-                    graphics.draw_entity(self.sprite, self.__player_box, sprite_sheet_box)
+                    super().render(percentage, graphics, camera, sprite_sheet_box)
                 self.__inv_toggle = not self.__inv_toggle
         else:
             size = 256
-            graphics.draw_entity(Sprite(self.__sprite_sheet_dead[self.__death_sprite_number]),
-                                 pygame.Rect(self.__player_box.left, self.__player_box.top, size, size))
+            self.set_image(Sprite(self.__sprite_sheet_dead[self.__death_sprite_number]))
+            self.set_position(self.__player_box.left, self.__player_box.top)
+            self.set_dimensions((size, size))
+            super().render(percentage, graphics, camera)
             self.__death_sprite_number = (self.__death_sprite_number + 1) % 25
 
     def accelerate(self, x=None, y=None):
@@ -255,7 +263,10 @@ class Player(Drawable, Collisionable):
         return math.sin(self.__orientation*0.0174533), -math.cos(self.__orientation*0.0174533)
 
     def get_position(self) -> (int, int):
-        return self.__player_box[0], self.__player_box[1]
+        return self.__player_box.left, self.__player_box.top
+
+    def get_center(self) -> (int, int):
+        return self.__player_box.center
 
     def is_done(self):
         return False
