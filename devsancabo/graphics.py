@@ -83,10 +83,10 @@ class Drawable:
 class SceneTreeLayer:
     def __init__(self, next_layer=None):
         self.__next_layer: SceneTreeLayer = next_layer
-        self.__this_layer: [Drawable] = []
+        self.__this_layer = []
         self.__groups_in_this_layer: [str] = []
 
-    def add(self, entity: Drawable, z_index: int = 0):
+    def add(self, entity, z_index: int = 0):
         if z_index > 0:
             if self.__next_layer is None:
                 self.__next_layer = SceneTreeLayer()

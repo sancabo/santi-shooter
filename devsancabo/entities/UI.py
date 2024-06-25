@@ -28,4 +28,3 @@ class UserInterface(Drawable):
 
     def render(self, percentage, graphics, camera: Camera = None, sprite_sheet_box=None):
         super().render(percentage, graphics)
-

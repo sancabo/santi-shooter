@@ -19,7 +19,7 @@ class Shot(GameEntity, Collisionable):
         self.__current_speed_x = 0
         self.__current_speed_y = 0
 
-        # encapsulate in Sprite()
+        # todo encapsulate frame selection in Sprite()
         self.__original__sprite_sheet = pygame.image.load("assets/fire-circles.png").convert_alpha()
         self.__scale_factor = 1
         self.__sprite_sheet = pygame.transform.scale_by(self.__original__sprite_sheet, self.__scale_factor)
@@ -44,7 +44,7 @@ class Shot(GameEntity, Collisionable):
         selected_sprite = self.select_sprite()
         self.get_drawable().set_image(Sprite(selected_sprite))
         self.get_drawable().set_position(self.get_entity_position()[0], self.get_entity_position()[1])
-        self.get_drawable().render(percentage, graphics, camera, percentage)
+        self.get_drawable().render(percentage, graphics, camera)
 
     def is_done(self) -> bool:
         # print("is done = {0}".format(self.__elapsed > self.__ttl))

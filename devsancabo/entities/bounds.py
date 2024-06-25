@@ -1,9 +1,8 @@
 
-
 from devsancabo.entities.base import Collisionable
 from devsancabo.graphics import Drawable
 
-# todo move bounds with camera
+
 class Bounds(Drawable, Collisionable):
 
     def move_col_box(self, x, y):

@@ -53,7 +53,7 @@ class Text(Drawable):
             self.__outlines.append(Drawable(self.__text, text_surface_rect.left, text_surface_rect.top,
                                             text_surface_rect.width, text_surface_rect.height))
 
-    def render(self, percentage, graphics, camera, sprite_sheet_box=None):
+    def render(self, percentage, graphics, camera=None, sprite_sheet_box=None):
         for outline in self.__outlines:
             outline.render(percentage, graphics, camera)
 

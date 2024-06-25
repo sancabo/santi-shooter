@@ -43,16 +43,16 @@ class GameEntity:
         self.__children: list[GameEntity] = []
         self.__father: GameEntity = father
         self.__child_position = position
-        self.__drawable = drawable
+        self.drawable = drawable
 
     def get_id(self) -> str:
         return self.__id
 
     def set_drawable(self, drawable):
-        self.__drawable = drawable
+        self.drawable = drawable
 
     def get_drawable(self):
-        return self.__drawable
+        return self.drawable
 
     def set_entity_position(self, x, y):
         self.__child_position = (x, y)
@@ -86,7 +86,7 @@ class GameEntity:
         return result
 
     def __detach(self):
-        self.__child_position = self.get_position()
+        self.__child_position = self.get_entity_position()
         self.__father = None
 
     def detach_child_by_id(self, identifier: str):

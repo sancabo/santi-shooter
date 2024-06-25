@@ -4,7 +4,6 @@ import pygame.display
 
 from devsancabo.audio import Audio
 from devsancabo.entities.UI import UserInterface
-from devsancabo.entities.background import Background
 from devsancabo.entities.bounds import Bounds
 from devsancabo.entities.camera import Camera
 from devsancabo.entities.damage_text import DamageText
@@ -12,6 +11,7 @@ from devsancabo.entities.player import Player
 from devsancabo.entities.projectile.projectile import Projectile
 from devsancabo.entities.projectile.shot_2 import Shot
 from devsancabo.entities.spawner import LinealWaveEnemySpawner, RandomDirectionEnemySpawner
+from devsancabo.entities.terrain.terrain import Terrain
 from devsancabo.entities.text import Text
 from devsancabo.gamestates.base_game_states import GameState
 from devsancabo.gamestates.gameover import Gameover
@@ -27,6 +27,11 @@ BLACK_RGB = (0, 0, 0)
 CLEARED_MESSAGE = "Stage cleared! Press Esc to exit."
 
 
+# todo: add shot sprite
+# todo: implement "turret" enemies
+# todo: implement exp and levels
+# todo: implement healing drop
+# todo: implement shield drop
 class FirstLevel(GameState):
 
     def __init__(self, event_queue: Queue, state_queue: LifoQueue, audio: Audio, viewport: tuple[int, int]):
@@ -39,18 +44,17 @@ class FirstLevel(GameState):
         self.__scene_tree: SceneTreeLayer = SceneTreeLayer()
         self.__play_victory_music = 0
         self.__audio.play_music('assets/battle-theme.mp3')
-        self.__player = Player(self.__audio, 2000, 600, 100)
+        self.__player = Player(self.__audio, 2000, 600, 750)
         self.__player.relocate_col_box(pygame.display.get_window_size()[0] // 2 - 100,
                                        pygame.display.get_window_size()[1] // 2 - 100)
 
         self.__enemies: [Projectile] = []
         self.__shots: [Shot] = []
         self.__spawners: [LinealWaveEnemySpawner] = []
-        self.__background = Background()
         self.__bounds = Bounds(0, 0, pygame.display.get_window_size()[0],
                                pygame.display.get_window_size()[1])
         self.__ui = UserInterface()
-        self.__scene_tree.add(self.__background)
+        self.__scene_tree.add(Terrain((-500, -500, viewport[0], viewport[1])))
         self.__scene_tree.add(self.__player, 3)
         self.__scene_tree.add(self.__bounds)
         self.__scene_tree.add(self.__ui)
@@ -87,8 +91,9 @@ class FirstLevel(GameState):
             self.__event_queue.put(Event("player_died", []))
         if self.__play_victory_music == 1 and not pygame.mixer.music.get_busy():
             self.show_victory_screen()
-        self.__camera.move_entity((1, 0))
+        self.__camera.center_on(self.__player.get_center())
 
+    # todo victory screen doesn't show
     def show_victory_screen(self):
         self.__player.stop_sounds()
         self.__audio.play_music('assets/victory.wav', 0)
@@ -179,14 +184,14 @@ class FirstLevel(GameState):
                                                     self.__audio,
                                                     self.__player,
                                                     self,
+                                                    self.__viewport,
                                                     self.__bounds.get_col_box()))
                     # show Press R to Restart. Press Esc to leave
             case "escape":
                 self.go_previous_state()
-            case "restart":
-                if self.__sub_state == "game_over":
-                    self.go_previous_state()
-                    self.go_to_state(FirstLevel(self.event_queue, self.state_queue, self.__audio, self.__viewport))
 
     def render_internal(self, percentage, graphics):
         self.__scene_tree.render(percentage, graphics, self.__camera)
+
+    def get_reset_state(self) -> GameState:
+        return FirstLevel(self.__event_queue, self.__state_queue, self.__audio, self.__viewport)

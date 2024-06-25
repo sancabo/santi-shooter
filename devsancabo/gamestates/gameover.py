@@ -5,7 +5,7 @@ import pygame
 from devsancabo.audio import Audio
 from devsancabo.entities.player import Player
 from devsancabo.entities.text import Text
-from devsancabo.gamestates.base_game_states import GameState
+from devsancabo.gamestates.base_game_states import GameState, NullGameState
 from devsancabo.graphics import SceneTreeLayer, Graphics
 from devsancabo.input import Event
 
@@ -20,6 +20,7 @@ class Gameover(GameState):
                  audio: Audio,
                  player: Player,
                  state: GameState,
+                 viewport : tuple[int, int],
                  screen_bounds: (int, int, int, int)):
         super().__init__(events, state_queue, audio)
         self.__elapsed = 0
@@ -36,6 +37,7 @@ class Gameover(GameState):
         self.__audio.play_sound("assets/catching-fire.mp3", 0)
         self.__player.kill()
         self.__prev = state
+        self.__viewport = viewport
 
     def render_internal(self, percentage: float, graphics: Graphics):
         self.__prev.render_internal(percentage, graphics)
@@ -45,6 +47,9 @@ class Gameover(GameState):
         match event.name:
             case "escape":
                 self.alt_f4()
+            case "restart":
+                self.alt_f4()
+                self.go_to_state(self.__prev.get_reset_state())
 
     def on_update(self, lag):
         self.__elapsed = self.__elapsed + lag
@@ -54,7 +59,8 @@ class Gameover(GameState):
             box = pygame.Rect(self.__screen_bounds)
             box = box.move(0, - self.__screen_bounds[3]/4)
             self.__scene_tree.add_to_group(
-                Text("You died! Press Esc to leave", 60, box.center, GOLDEN_YELLOW_RGB, (4, (0, 0, 0))),
+                Text("You died! Press Esc to leave or R to restart", 60, box.center,
+                     GOLDEN_YELLOW_RGB, (4, (0, 0, 0))),
                 "gameover")
             self.__done = True
 

@@ -72,9 +72,9 @@ class LinealWaveEnemySpawner:
                 enemy_position = (-500, -500)
                 spped_vector = (0, 0)
 
-        enemy = Projectile(750, 600)
+        enemy = Projectile(10000)
         enemy.relocate_col_box(enemy_position[0], enemy_position[1])
-        enemy.set_speed_vector(spped_vector[0], spped_vector[1], speed)
+        enemy.set_speed_vector(spped_vector, speed)
         self.__produced_enemies.append(enemy)
 
 
@@ -90,7 +90,6 @@ class RandomDirectionEnemySpawner:
         self.__player = player
         self.__total_produced_enemies = []
         self.__produced_enemies = []
-        self.__quadrant = 3
 
     def update_state(self, lag):
         if self.__spawned < self.__occurrences:
@@ -123,21 +122,23 @@ class RandomDirectionEnemySpawner:
         top_speed = 600
         offset = random.random()
         player_pos = (self.__player.get_col_box()[0], self.__player.get_col_box()[1])
-        quadrant = random.randint(0,3)
+        quadrant = random.randint(0, 3)
         match quadrant:
-            case 0: #top
+            case 0:  # top
                 enemy_position = (self.__bounds.get_col_box()[0] + self.__bounds.get_col_box()[2] * offset,
                                   self.__bounds.get_col_box()[1] - out_of_bounds_distance)
 
-            case 1: #left
+            case 1:  # left
                 enemy_position = (self.__bounds.get_col_box()[0] - out_of_bounds_distance,
                                   self.__bounds.get_col_box()[1] + self.__bounds.get_col_box()[3] * offset)
 
-            case 2: # bottom
+            case 2:  # bottom
                 enemy_position = (self.__bounds.get_col_box()[0] + self.__bounds.get_col_box()[2] * offset,
-                                  self.__bounds.get_col_box()[1] + self.__bounds.get_col_box()[3] + out_of_bounds_distance)
+                                  self.__bounds.get_col_box()[1] + self.__bounds.get_col_box()[3] +
+                                  out_of_bounds_distance)
             case 3:  # right
-                enemy_position = (self.__bounds.get_col_box()[0] + self.__bounds.get_col_box()[2] + out_of_bounds_distance,
+                enemy_position = (self.__bounds.get_col_box()[0] + self.__bounds.get_col_box()[2] +
+                                  out_of_bounds_distance,
                                   self.__bounds.get_col_box()[1] + self.__bounds.get_col_box()[3] * offset)
             case _:
                 print("Error: called 'spawn enemy' without 'direction' argument")
